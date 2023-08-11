@@ -1,0 +1,340 @@
+---
+title: "社会科学ためのDocker入門"
+subtitle: "レプリケーション駆動な研究のために"
+author:
+  - name: 柳本和春
+    email: kazuharu.yanagimoto@cemfi.edu.es
+    orcid: 0009-0007-1967-8304
+    affiliations:
+    - name: CEMFI
+date: 2023-08-31
+date-format: long
+image: img/thumbnail.svg
+execute:
+    echo: false
+    warning: false
+    message: false
+    cache: false
+format:
+  revealjs:
+    standalone: true
+    embed-resources: true
+    width: 1600
+    height: 900
+    theme: [default, static/css/quartomonothemer.scss, static/css/custom.scss]
+    slide-number: true
+    fig-cap-location: top
+    fig-format: svg
+    pdf-separate-fragments: false
+---
+
+# Introduction {visibility="hidden"}
+
+```{r}
+library(quartomonothemer)
+library(showtext)
+
+font_title <- "Zen Maru Gothic"
+font_text <- "Noto Sans JP"
+color_base <- "#009F8C"
+color_base_light <- "#95DFD6"
+color_accent <- "#B75C9D"
+color_accent_light <- "#DBA6CC"
+gray <- "#bebebe"
+darkgray <- "#6d6d6d"
+
+font_add_google(font_title)
+font_add_google(font_text)
+showtext_auto()
+
+style_mono_quarto(
+  font_title = font_title,
+  font_text = font_text,
+  google_fonts = c(font_title, font_text),
+  color_base = color_base,
+  color_accent = color_accent,
+  color_link = color_accent,
+  color_code = color_base,
+  size_base = 30,
+  path_scss = here::here("static/css/quartomonothemer.scss")
+)
+```
+
+## レプリケーション駆動な研究
+
+## なぜ彼のコードは私のPCで動かないのか
+
+## バーチャルマシンとレプリケーション
+
+## Dockerの利用例
+
+# LinuxとDockerの基礎 {visibility="uncounted"}
+
+## Linuxとは
+
+:::: {.columns}
+
+::: {.column width="70%"}
+
+- **狭義**: Linuxカーネルのこと
+    - OSの基礎的な機能を提供するライブラリ群
+- **広義**: Linuxカーネルを採用したOS
+    - コマンドやライブラリなどの違いによってディストリビューションに分かれる
+
+:::
+
+::: {.column width="30%"}
+
+![](static/img/def_linux.drawio.svg)
+
+:::
+
+::::
+
+### Linuxディストリビューション
+
+:::: {.columns}
+
+::: {.column width="70%"}
+
+- 主にDebian系, RedHat系, その他独立系に分かれる
+    - **Debian**: Ubuntu, Raspberry Pi
+    - **RedHat**: CentOS, Amazon Linux
+    - **独立系**: Chrome, Android, Arch, Alpine
+- Docker用としてはUbuntuがおすすめ
+
+:::
+
+::: {.column width="30%"}
+
+![](static/img/linux_dist.drawio.svg){fig-align="center"}
+
+:::
+
+::::
+
+
+## Dockerの仕組み
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+### Docker コンテナ
+
+- 1つのマシンのように振る舞う仮想環境
+- ホストOSとカーネルをシェアする
+- ホストもコンテナもLinux OS
+
+### 仮想化ソフトとの違い
+
+- 仮想化ソフトはホスト上のソフトウェア
+- ゲストOSをエミュレートして動作する
+- ホストもゲストもLinuxの必要はない
+- 仮想化ソフト上のマシンは遅くなる
+
+:::
+
+::: {.column width="50%"}
+
+<br>
+
+![](static/img/docker_mechanism.drawio.svg){fig-align="center"}
+
+:::
+
+::::
+
+
+## イメージとレジストリ
+
+### Docker イメージ
+
+- コンテナの元となるテンプレート
+    - OS単体 ([ubuntu](https://hub.docker.com/_/ubuntu), [alpine](https://hub.docker.com/_/alpine))
+    - OS + アプリケーション ([rocker/rstudio](https://hub.docker.com/r/rocker/rstudio))
+- `USER/IMAGE:TAG` で指定する. `TAG`を省略すると`latest`が指定される
+
+### Docker レジストリ
+
+- イメージを保存する場所
+- 基本的には[Docker Hub](https://hub.docker.com/)を用いる.
+    - Officialイメージ (ubuntu, rocker, node, jupyter, etc.)
+    - 自作イメージをアップロードもできる
+- その他, GitHub Container Registry, Amazon Elastic Container Registry など
+
+
+# Handson: 初めてのDocker & Linux
+
+## Ubuntu環境の構築
+
+1. Docker Desktopが起動していることを確認 ({{< fa brands docker >}}のマーク)
+2. ターミナルで以下のコマンドを実行
+
+```bash
+docker run -it ubuntu:20.04 bash
+```
+
+`docker run`: Dockerコンテナを起動するコマンド. 以下のオプションを指定
+
+- `-it`: コンテナの標準入出力をターミナルにつなぐ
+    - 省略するとバックグラウンドでコンテナが起動し, ホスト側からは何も見えない.
+- `ubuntu:20.04`: Ubuntu 20.04のイメージを指定
+    - 初めての場合は自動的にDocker Hubからイメージをダウンロードする
+- `bash`: コンテナ内でbashを起動する
+    - このコマンドを省略すると, コンテナ内で何も起動せずに終了する
+
+## 初めてのLinux
+
+1. 以下の基本コマンドを実行してみよう
+    - `ls`: ディレクトリ内のファイルを表示
+    - `pwd`: 現在のディレクトリを表示
+    - `cd`: ディレクトリを移動
+    - `mkdir`: ディレクトリを作成
+1. パッケージをダウンロードしてみよう
+```bash
+apt update && apt install -y git
+```
+
+- `apt update`: パッケージリストを更新. 
+- `apt install`: パッケージをインストール
+    - `-y`: インストール時の確認を省略
+
+
+## Dockerfile
+
+- 既存のDockerイメージに必要なソフトやパッケージを追加して新しいイメージを作成する設計図
+- 拡張子がないことに注意
+
+:::: {.columns}
+::: {.column width="45%"}
+
+```dockerfile
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y git
+
+CMD ["bash"]
+```
+
+:::
+
+::: {.column width="55%"}
+
+- `FROM`: ベースとなるイメージを指定
+- `ENV`: 環境変数を設定
+- `RUN`: シェルコマンドを実行
+- `CMD`: コンテナ起動時に実行するコマンド
+    - 指定しないと起動後に終了する
+
+:::
+
+::::
+
+```bash
+dockr build .
+```
+
+
+## ユーザとパーミッション
+
+Dockerでは通常, rootユーザでコンテナが起動する
+
+- Docker上で作業したファイルがroot権限で作成される
+- LinuxとWSL2ユーザーはホスト側からファイルにアクセスできなくなる
+
+:::: {.columns}
+
+::: {.column width="45%"}
+Left column
+:::
+
+::: {.column width="55%"}
+
+```dockerfile
+FROM ubuntu:20.04
+
+ENV SHELL /bin/bash
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y git
+
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME &&
+  useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+USER $USERNAME
+
+CMD ["bash"]
+```
+
+:::
+
+::::
+
+
+
+
+
+
+# R on Docker {visibility="uncounted"}
+
+## `rocker`プロジェクト
+
+- [rocker](https://rocker-project.org/)はオフィシャルのRイメージ群
+- 私はRのパッケージはキャッシュするので, `rocker/rstudio`または`rocker/geospatial`を使うことが多い
+
+<br>
+
+| イメージ                                                                      | ベースイメージ    | 概要                               | 
+| ----------------------------------------------------------------------------- | ----------------- | ---------------------------------- | 
+| [rocker/r-ver](https://rocker-project.org/images/versioned/r-ver.html)        | ubuntu            | Ubuntu + R                         | 
+| [rocker/rstudio](https://rocker-project.org/images/versioned/rstudio.html)    | rocker/r-ver      | + RStudio Server                   | 
+| [rocker/tidyverse](https://rocker-project.org/images/versioned/rstudio.html)  | rocker/rstudio    | + `tidyverse` & `devtools`         | 
+| [rocker/verse](https://rocker-project.org/images/versioned/rstudio.html)      | rocker/tidyverse  | + `tinytex` & 組版関係のパッケージ | 
+| [rocker/geospatial](https://rocker-project.org/images/versioned/rstudio.html) | rocker/geospatial | + 地理情報用パッケージ             | 
+
+## ポートフォワーディング
+
+## マウント
+
+## docker-compose.yml
+
+## Rパケージのインストール
+
+
+# Docker with VSCode {visibility="uncounted"}
+
+## Remote Development
+
+## Handson: `kazuynagimoto/dockerR`
+
+## 発展: SSH通信
+
+## 発展: Git in Docker container
+
+## 発展: VSCode SSH
+
+## 発展: Docker on AWS
+
+# Practical Guide for Replicable Environment
+
+## Docker Desktop for Windows/Mac
+
+### DockerはLinux上の技術
+
+- Docker Desktop for Windows/Macでは, 仮想マシン上のLinuxを用いてDockerを使う
+- WindowsはWSL2という軽量かつ高速なLinuxエミュレータを用いる
+- Mac上のDockerは一般にLinux上のDockerよりも数段遅くなる
+
+### ファイルシステムの違い
+
+- Windows/Mac上のファイルをDocker (Linux) で用いようとするとファイルの変換作業が必要
+- Windowsの場合はWSL2の領域でファイルを保存すれば解決する
+- Macの場合は長らく解決策がなかったが, virtiofsという新しいファイルシステムを用いることで高速化した (らしい)
