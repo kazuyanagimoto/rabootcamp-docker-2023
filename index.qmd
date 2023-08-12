@@ -165,99 +165,87 @@ style_mono_quarto(
 - その他, GitHub Container Registry, Amazon Elastic Container Registry など
 
 
-# Handson: 初めてのDocker & Linux
+# Handson: 初めてのVSCode & Docker {visibility="hidden"}
 
-## Ubuntu環境の構築
+## VSCode & Docker
 
+### なぜVSCodeを使うのか?
+
+- VSCodeは軽量かつ高機能なエディタ. エディタの現王者といって過言ではない
+- Remote Containersの登場によってDocker環境の導入が革命的に簡単になった
+
+### Handson
+
+0. (Windows) VSCode上で {{< kbd Ctrl-Shift-P >}} を押して`WSL: Connect to WSL`を選択
+1. ハンズオン用のフォルダを作成. (ファインダー, エクスプローラ, コマンドなど).
+1. VSCodeでフォルダを開く. 左端の {{< fa copy >}}のアイコンから
 1. Docker Desktopが起動していることを確認 ({{< fa brands docker >}}のマーク)
-2. ターミナルで以下のコマンドを実行
-
-```bash
-docker run -it ubuntu:20.04 bash
-```
-
-`docker run`: Dockerコンテナを起動するコマンド. 以下のオプションを指定
-
-- `-it`: コンテナの標準入出力をターミナルにつなぐ
-    - 省略するとバックグラウンドでコンテナが起動し, ホスト側からは何も見えない.
-- `ubuntu:20.04`: Ubuntu 20.04のイメージを指定
-    - 初めての場合は自動的にDocker Hubからイメージをダウンロードする
-- `bash`: コンテナ内でbashを起動する
-    - このコマンドを省略すると, コンテナ内で何も起動せずに終了する
-
-## 初めてのLinux
-
-1. 以下の基本コマンドを実行してみよう
-    - `ls`: ディレクトリ内のファイルを表示
-    - `pwd`: 現在のディレクトリを表示
-    - `cd`: ディレクトリを移動
-    - `mkdir`: ディレクトリを作成
-1. パッケージをダウンロードしてみよう
-```bash
-apt update && apt install -y git
-```
-
-- `apt update`: パッケージリストを更新. 
-- `apt install`: パッケージをインストール
-    - `-y`: インストール時の確認を省略
-
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`From a predefined...`を選択. `Ubuntu`を選択
+    - 残りの選択肢はデフォルトのままでOK
+1. `.devcontainer/devcontainer.json`という設定ファイルが作成される. 
 
 ## Dockerfile
-
-- 既存のDockerイメージに必要なソフトやパッケージを追加して新しいイメージを作成する設計図
-- 拡張子がないことに注意
-
-:::: {.columns}
-::: {.column width="45%"}
+ 
+- 先程のHandsonは既存のUbuntuイメージを利用した
+- 通常は既存のイメージに必要なソフトやパッケージを追加する
+- Dockerfileはその設計図. 拡張子がないことに注意
 
 ```dockerfile
-FROM ubuntu:20.04
+FROM ubuntu
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y curl
+```
+
+- `FROM`: ベースとなるイメージを指定
+- `ENV`: 環境変数を設定. Ubuntuの場合は`DEBIAN_FRONTEND`はこの設定が必要
+- `RUN`: シェルコマンドを実行
+    - `apt update`: パッケージリストを更新
+    - `apt install`: パッケージインストール (`-y` はすべてに自動でyesを返す)
+
+## Handson: Remote containers with Dockerfile
+
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen Folder in WSL/Locally`を選択
+1. `.devcontainer/devcontainer.json`を一度削除する
+1. 以下のDockerfileを作成する
+
+```dockerfile
+FROM ubuntu
 
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt update && apt install -y git
-
-CMD ["bash"]
 ```
 
-:::
-
-::: {.column width="55%"}
-
-- `FROM`: ベースとなるイメージを指定
-- `ENV`: 環境変数を設定
-- `RUN`: シェルコマンドを実行
-- `CMD`: コンテナ起動時に実行するコマンド
-    - 指定しないと起動後に終了する
-
-:::
-
-::::
-
-```bash
-dockr build .
-```
-
+4. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen in Container`を選択
+    - Dockerfileを選択する
+5. ターミナルを開いてユーザー名を確認する (`whoami`)
 
 ## ユーザとパーミッション
 
-Dockerでは通常, rootユーザでコンテナが起動する
+### ユーザ, グループ, Root
 
+- Linuxではユーザごとにファイルの権限 (読み取り, 書き込み, 実行) が設定されている
+- ユーザはグループに所属する. グループごとに権限を設定することもできる
+- rootユーザ (管理者) はすべてのファイルにアクセスできる
+
+
+### Dockerとユーザ
+
+- Dockerでは通常, rootユーザでコンテナが起動する
 - Docker上で作業したファイルがroot権限で作成される
 - LinuxとWSL2ユーザーはホスト側からファイルにアクセスできなくなる
+- 一つの解決策として, Dockerfile内でユーザを作成するという方法がある
 
-:::: {.columns}
+## Handson: Remote Containers with a User
 
-::: {.column width="45%"}
-Left column
-:::
-
-::: {.column width="55%"}
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen Folder in WSL/Locally`を選択
+2. 以下のDockerfileを作成する
 
 ```dockerfile
-FROM ubuntu:20.04
+FROM ubuntu
 
-ENV SHELL /bin/bash
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt update && apt install -y git
@@ -266,31 +254,27 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-RUN groupadd --gid $USER_GID $USERNAME &&
-  useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
 USER $USERNAME
-
-CMD ["bash"]
 ```
 
-:::
-
-::::
-
-
+3. `.devcontainer/devcontainer.json`の`remoteUser`を`vscode`に変更する
+4. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Rebuild and Reopen in Container`を選択
+5. ターミナルを開いてユーザー名を確認する (`whoami`) 
 
 
 
 
-# R on Docker {visibility="uncounted"}
+
+# {{< fa brands r-project >}} on Docker {visibility="uncounted"}
 
 ## `rocker`プロジェクト
 
 - [rocker](https://rocker-project.org/)はオフィシャルのRイメージ群
-- 私はRのパッケージはキャッシュするので, `rocker/rstudio`または`rocker/geospatial`を使うことが多い
-
-<br>
+- 私はRのライブラリはキャッシュする (後述) ので, `rocker/rstudio`または`rocker/geospatial`を使うことが多い
+- `rstudio`というユーザが用意されている
 
 | イメージ                                                                      | ベースイメージ    | 概要                               | 
 | ----------------------------------------------------------------------------- | ----------------- | ---------------------------------- | 
@@ -302,18 +286,201 @@ CMD ["bash"]
 
 ## ポートフォワーディング
 
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**通常のRStudio Server**
+
+![](static/img/rstudio_server.drawio.svg){fig-align="center" width="80%"}
+
+:::
+
+::: {.column width="50%"}
+
+**コンテナ内のRStudio Server**
+
+![](static/img/portfowarding.drawio.svg){fig-align="center" width="80%"}
+
+:::
+
+::::
+
+- Docker内のRStudio Serverはホストのブラウザからはアクセスできない
+- ポートフォワーディングを設定することで, ホストのポートをDocker内のポートに接続することができる
+
 ## マウント
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**バインドマウント**
+
+![](static/img/mount_bind.drawio.svg){fig-align="center" width="80%"}
+
+:::
+
+::: {.column width="50%"}
+
+**ボリューム**
+
+![](static/img/mount_volume.drawio.svg){fig-align="center" width="80%"}
+
+:::
+
+::::
+
+- Dockerのコンテナはデフォルトではファイルを保持しない
+    - コンテナが削除されるとファイルも削除される
+- バインドマウントはホストのファイルをコンテナにマウントする
+- ボリュームはDockerが管理するファイルをコンテナにマウントする
+    - ホスト側からは (基本的に) 見えない
+    - コンテナに最適化されたファイルシステムなので, パフォーマンスが良い
+
 
 ## docker-compose.yml
 
+- `docker-compose.yml`ファイルにコンテナ起動の際の設定を記述することができる
+- 複数のコンテナを起動することもできる
+
+
+:::: {.columns}
+
+::: {.column width="40%"}
+```yaml
+services:
+  rstudio:
+    build:
+      context: .
+    environment:
+      - TZ=Asia/Tokyo
+      - DISABLE_AUTH=true
+    volumes:
+      - .:/home/rstudio/handson2
+```
+:::
+
+::: {.column width="60%"}
+
+- `build context`: `Dockerfile`のパス
+- `environment`: 環境変数の設定
+    - `TZ`: タイムゾーン
+    - `DISABLE_AUTH`: RStudioのパスワード認証を無効化
+- `volumes`: マウント
+    - HOST_PATH:CONTAINER_PATH
+    - 上記の例はバインドマウント
+:::
+
+::::
+
+## Handson: RStudio Server
+
+1. 新しいHandson用ののディレクトリを作成する (`handson2`)
+1. `Dockerfile`を作成し`FROM rocker/rstudio`と記述する
+1. 以下の`docker-compose.yml`と`.devcontainer/devcontainer.json`を作成する
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```yaml
+services:
+  rstudio:
+    build:
+      context: .
+    environment:
+      - TZ=Asia/Tokyo
+      - DISABLE_AUTH=true
+    volumes:
+      - .:/home/rstudio/handson2
+```
+:::
+
+::: {.column width="50%"}
+```json
+{
+    "name": "${localWorkspaceFolderBasename}",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "rstudio",
+    "remoteUser": "rstudio",
+    "forwardPorts": [8787],
+    "workspaceFolder": "/home/rstudio/handson2"
+}
+```
+:::
+
+::::
+
+4. VSCodeで{{< kbd Ctrl-Shift-P >}}から`Rebuild and Reopen in Container`を選択する
+5. ブラウザで`localhost:8787`にアクセスする
+
 ## Rパケージのインストール
 
+以下のような`Dockerfile`でコンテナの中にRパッケージをインストールできる
+
+```dockerfile
+FROM rocker/rstudio
+
+RUN R -e "install.packages(c('here', 'modelsummary', 'janitor'))"
+```
+
+しかしこの方法はいくつかの問題がある
+
+- パッケージのバージョンを指定しているわけではない
+- パッケージを追加するごとに`Dockerfile`を書き換える必要がある
+- ビルドのたびにパッケージをインストールするので時間がかかる
+- コンテナごとにパッケージをインストールするのでストレージを圧迫する
+
+これらは`renv`のキャッシュをDocker Volumesに保存することで解決できる
+
+
+## Handson: RStudio Server with `renv`
+
+1. ホスト側で`renv`用のDocker Volumeを作成する
+    - `docker volume create renv`
+1. `docker-compose.yml`, `Dockerfile`を以下のように書き換える
+    - `chown`で`renv`ディレクトリの所有者を`rstudio`にしている
+
+:::: {.columns}
+
+::: {.column width="45%"}
+```yaml
+services:
+  rstudio:
+    build:
+      context: .
+    environment:
+      - TZ=Asia/Tokyo
+      - DISABLE_AUTH=true
+    volumes:
+      - .:/home/rstudio/handson2
+      - renv:/home/rstudio/.cache/R/renv
+
+volumes:
+  renv:
+    external: true      
+```
+:::
+
+::: {.column width="55%"}
+```dockerfile
+FROM rocker/rstudio
+
+RUN R -e "install.packages('renv')"
+
+RUN cd /home/rstudio && \
+    mkdir .cache .cache/R .cache/R/renv && \
+    chown rstudio:rstudio .cache .cache/R .cache/R/renv
+```
+:::
+
+::::
+
+3. VSCodeで{{< kbd Ctrl-Shift-P >}}から`Rebuild and Reopen in Container`を選択する
+4. RStudioでプロジェクト作成し, `renv`を用いてパッケージを記録する
 
 # Docker with VSCode {visibility="uncounted"}
-
-## Remote Development
-
-## Handson: `kazuynagimoto/dockerR`
 
 ## 発展: SSH通信
 
