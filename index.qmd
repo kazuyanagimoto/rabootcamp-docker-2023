@@ -62,7 +62,24 @@ style_mono_quarto(
 
 ## レプリケーション駆動な研究
 
-## なぜ彼のコードは私のPCで動かないのか
+## なぜ彼のコードは私のPCで動かないのか?
+
+**パスが異なる**
+
+- 常にパスを`here::here()`で対応可能. Pythonの場合 `pyprojroot.here()` など
+
+**パッケージのバージョンが異なる**
+
+- `renv`を用いてパッケージのバージョンを固定する. Pythonの場合 `venv`, `poetry` など
+
+**Rのバージョンが異なる**
+
+- `renv`はRのバージョンを切り替えることができないので, 手動で切り替えるか常に最新版を用いるなど
+- Pythonの場合は各種パッケージ管理ツールで対応可能
+
+**OSが異なる**
+
+
 
 ## バーチャルマシンとレプリケーション
 
@@ -480,7 +497,9 @@ RUN cd /home/rstudio && \
 3. VSCodeで{{< kbd Ctrl-Shift-P >}}から`Rebuild and Reopen in Container`を選択する
 4. RStudioでプロジェクト作成し, `renv`を用いてパッケージを記録する
 
-# Docker with VSCode {visibility="uncounted"}
+# Docker + VSCodeによるミニマルな研究環境 {visibility="uncounted"}
+
+## kazuyanagimoto/dockerR
 
 ## 発展: SSH通信
 
@@ -489,8 +508,6 @@ RUN cd /home/rstudio && \
 ## 発展: VSCode SSH
 
 ## 発展: Docker on AWS
-
-# Practical Guide for Replicable Environment
 
 ## Docker Desktop for Windows/Mac
 
