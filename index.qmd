@@ -83,8 +83,6 @@ style_mono_quarto(
 
 ## バーチャルマシンとレプリケーション
 
-## Dockerの利用例
-
 # LinuxとDockerの基礎 {visibility="uncounted"}
 
 ## Linuxとは
@@ -497,17 +495,33 @@ RUN cd /home/rstudio && \
 3. VSCodeで{{< kbd Ctrl-Shift-P >}}から`Rebuild and Reopen in Container`を選択する
 4. RStudioでプロジェクト作成し, `renv`を用いてパッケージを記録する
 
-# Docker + VSCodeによるミニマルな研究環境 {visibility="uncounted"}
+# Docker + VSCodeによる研究環境 {visibility="uncounted"}
 
-## kazuyanagimoto/dockerR
+## SSH通信
 
-## 発展: SSH通信
+## Handson: GitHubにSSH鍵を登録する
 
-## 発展: Git in Docker container
 
-## 発展: VSCode SSH
+## SSH Agent
 
-## 発展: Docker on AWS
+## Git in Docker Container
+
+## Handson: kazuyanagimoto/dockerR
+
+1. [kazuyanagimoto/dockerR](https://github.com/kazuyanagimoto/dockerR)をテンプレートにGitHubのレポジトリを作成する
+1. SSHを用いて作成したレポジトリをクローンする
+1. `Dockerfile`, `docker-compose.yml`, `.devcontainer.json` を修正する.
+    - Python, Julia, TinyTeXなど今回関係ないものは削除する
+1. Docker Volumeが作られていることを確認する
+1. VSCodeで`Rebuild and Reopen in Container`を選択する
+1. GitHubに接続できることを確認
+
+```shell
+ssh -T git@github.com
+```
+
+より詳しい使い方は[記事 {{< fa arrow-up-right-from-square >}}](https://zenn.dev/nicetak/articles/vscode-docker-2023)を参考のこと
+
 
 ## Docker Desktop for Windows/Mac
 
@@ -522,3 +536,11 @@ RUN cd /home/rstudio && \
 - Windows/Mac上のファイルをDocker (Linux) で用いようとするとファイルの変換作業が必要
 - Windowsの場合はWSL2の領域でファイルを保存すれば解決する
 - Macの場合は長らく解決策がなかったが, virtiofsという新しいファイルシステムを用いることで高速化した (らしい)
+
+# 発展: DockerとCloud Computing {visibility="uncounted"}
+
+## VSCode Remote SSH
+
+## Docker on AWS
+
+## GitHub Codespaces
