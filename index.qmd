@@ -31,6 +31,7 @@ format:
 # Introduction {visibility="hidden"}
 
 ```{r}
+#| eval: false
 library(quartomonothemer)
 library(showtext)
 
@@ -60,28 +61,52 @@ style_mono_quarto(
 )
 ```
 
+## 検証可能性 _Testability_ {background-image="static/img/Karl_Popper_75.jpg" background-color="#090909" background-position="right" background-size="contain"}
+
+:::: {.columns}
+
+::: {.column width="65%"}
+
+<br>
+
+>"I shall certainly admit a system as [empirical]{.alert} or [scientific]{.alert} only if it is capable of being [tested]{.highlight} by experience."
+> 
+> --Karl Popper, 1934
+:::
+
+::::
+
 ## レプリケーション駆動な研究
+
+[_研究が社会**科学**足るために再現性はその要件である_]{style="font-size: 1.2em;"}
+
+
+- 研究が検証可能であるためには, 研究者はその再現性を保証しなくてはいけない
+- AER, [Data and Code Availability Policy](https://www.aeaweb.org/journals/data/data-code-policy)
+
+[_レプリケーションは研究の**前提**であり, **過程**であり, **ゴール**である_]{style="font-size: 1.2em;"}
+
+- 研究の過程においてレプリケーション可能な操作のみを行うべき
+- そして研究者間のコミュニケーションコストを下げ, 研究を促進する
 
 ## なぜ彼のコードは私のPCで動かないのか?
 
-**パスが異なる**
-
-- 常にパスを`here::here()`で対応可能. Pythonの場合 `pyprojroot.here()` など
-
-**パッケージのバージョンが異なる**
-
-- `renv`を用いてパッケージのバージョンを固定する. Pythonの場合 `venv`, `poetry` など
-
-**Rのバージョンが異なる**
-
-- `renv`はRのバージョンを切り替えることができないので, 手動で切り替えるか常に最新版を用いるなど
-- Pythonの場合は各種パッケージ管理ツールで対応可能
-
-**OSが異なる**
-
-
+- **パスが異なる**
+    - 常にパスを`here::here()`で対応可能. Pythonの場合 `pyprojroot.here()`
+- **パッケージのバージョンが異なる**
+    - `renv`を用いてバージョンを記録する. Pythonの場合 `venv`, `poetry` など
+- **Rのバージョンが異なる**
+    - `renv`はRのバージョンを切り替えることができないので, 手動で切り替えるか常に最新版を用いるなどで対応
+    - Pythonの場合は各種パッケージ管理ツールで対応可能
+- **OSが異なる**
+    - 特定のOSに特有のバグなどが発生しうる
 
 ## バーチャルマシンとレプリケーション
+
+![](static/img/vm_replicate.drawio.svg){fig-align="center"}
+
+- コードと同時にVMを配布することで, 環境の違いを解消できる
+- しかしVMはファイルサイズが大きい, 実行速度が遅いなどの問題があった
 
 # LinuxとDockerの基礎 {visibility="uncounted"}
 
@@ -333,7 +358,7 @@ USER $USERNAME
 
 **バインドマウント**
 
-![](static/img/mount_bind.drawio.svg){fig-align="center" width="80%"}
+![](static/img/mount_bind.drawio.svg){align="center" width="80%"}
 
 :::
 
@@ -341,14 +366,14 @@ USER $USERNAME
 
 **ボリューム**
 
-![](static/img/mount_volume.drawio.svg){fig-align="center" width="80%"}
+![](static/img/mount_volume.drawio.svg){align="center" width="80%"}
 
 :::
 
 ::::
 
-- Dockerのコンテナはデフォルトではファイルを保持しない
-    - コンテナが削除されるとファイルも削除される
+
+- デフォルトではコンテナが削除されるとファイルも削除される
 - バインドマウントはホストのファイルをコンテナにマウントする
 - ボリュームはDockerが管理するファイルをコンテナにマウントする
     - ホスト側からは (基本的に) 見えない
@@ -497,30 +522,31 @@ RUN cd /home/rstudio && \
 
 # Docker + VSCodeによる研究環境 {visibility="uncounted"}
 
-## SSH通信
-
-## Handson: GitHubにSSH鍵を登録する
-
-
-## SSH Agent
-
-## Git in Docker Container
-
 ## Handson: kazuyanagimoto/dockerR
 
+### 管理者編
+
 1. [kazuyanagimoto/dockerR](https://github.com/kazuyanagimoto/dockerR)をテンプレートにGitHubのレポジトリを作成する
-1. SSHを用いて作成したレポジトリをクローンする
+1. 作成したレポジトリをクローンする
 1. `Dockerfile`, `docker-compose.yml`, `.devcontainer.json` を修正する.
     - Python, Julia, TinyTeXなど今回関係ないものは削除する
 1. Docker Volumeが作られていることを確認する
 1. VSCodeで`Rebuild and Reopen in Container`を選択する
-1. GitHubに接続できることを確認
+1. RStudioでプロジェクトを作成し, `renv`を用いてパッケージをインストールする
 
-```shell
-ssh -T git@github.com
-```
 
-より詳しい使い方は[記事 {{< fa arrow-up-right-from-square >}}](https://zenn.dev/nicetak/articles/vscode-docker-2023)を参考のこと
+## Handson: kazuyanagimoto/dockerR
+
+### 共著者編
+
+1. [kazuyanagimoto/rabootcamp-docker-2023](https://github.com/kazuyanagimoto/rabootcamp-docker-2023)をクローンする
+1. Docker Volumeが作られていることを確認する (今回は必要ない)
+1. VSCodeで`Rebuild and Reopen in Container`を選択する
+1. Rプロジェクトを開き, `renv::restore()` を実行して必要なパッケージをインストールする
+1. `index.qmd` を開き, {{< kbd Ctrl-Shift-K >}}でスライドがビルドされることを確認する
+
+
+より詳しい使い方は[Zenn記事 {{< fa arrow-up-right-from-square >}}](https://zenn.dev/nicetak/articles/vscode-docker-2023)を参考のこと
 
 
 ## Docker Desktop for Windows/Mac
@@ -537,10 +563,10 @@ ssh -T git@github.com
 - Windowsの場合はWSL2の領域でファイルを保存すれば解決する
 - Macの場合は長らく解決策がなかったが, virtiofsという新しいファイルシステムを用いることで高速化した (らしい)
 
-# 発展: DockerとCloud Computing {visibility="uncounted"}
+## 発展: Docker on AWS {visibility="uncounted"}
 
-## VSCode Remote SSH
+# Learn More {visibility="uncounted" background-color="#009F8C" .center-x}
 
-## Docker on AWS
-
-## GitHub Codespaces
+[Udemy講座 (かめ)](https://www.udemy.com/course/aidocker/) ・
+[Zenn記事 (柳本)](https://zenn.dev/nicetak/articles/vscode-docker-2023) ・
+[Notion記事 (神戸大 山﨑先生)](https://j-yamasaki.notion.site/R-LaTeX-335c1fce585041fe86ad06488075c98d#f1a45b668e7c4e0f9a61177b82e450b4)

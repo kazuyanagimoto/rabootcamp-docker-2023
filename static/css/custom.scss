@@ -56,6 +56,10 @@
   }
   
   // alerts etc.
+
+  .highlight {
+    color: $color_base;
+  }
   
   .alert {
     color: $color_accent;
@@ -108,15 +112,18 @@
   .small {
     font-size: 0.8em
   }
-  
-  .space-left {
-    margin-left: 5%;
+ 
+  .center-x{
+    text-align: center;
   }
-  
-  .research-question {
-    position: absolute;
-    top: 20%;
-    color: $presentation-heading-color;
-    font-size: $h1-font-size;
-    font-family: $presentation-heading-font;
-  }
+
+section.has-dark-background a {
+  color: #fff;
+  border-style: dashed;
+  border-bottom-width: 1px;
+}
+
+section.has-dark-background a:hover {
+    color: #fff;
+    border-bottom: solid
+}
