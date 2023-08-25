@@ -217,12 +217,11 @@ style_mono_quarto(
 ### Handson
 
 0. (Windows) VSCode上で {{< kbd Ctrl-Shift-P >}} を押して`WSL: Connect to WSL`を選択
-1. ハンズオン用のフォルダを作成. (ファインダー, エクスプローラ, コマンドなど).
+1. ハンズオン用のフォルダ (`handson1`) を作成する
 1. VSCodeでフォルダを開く. 左端の {{< fa copy >}}のアイコンから
 1. Docker Desktopが起動していることを確認 ({{< fa brands docker >}}のマーク)
-1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`From a predefined...`を選択. `Ubuntu`を選択
-    - 残りの選択肢はデフォルトのままでOK
-1. `.devcontainer/devcontainer.json`という設定ファイルが作成される. 
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Open Folder in Container`を選択. 作成したフォルダを選び, `Ubuntu`を選択. 残りの選択肢はデフォルトのままでOK
+1. `.devcontainer/devcontainer.json`という設定ファイルが作成される
 
 ## Dockerfile
  
@@ -248,7 +247,7 @@ RUN apt update && apt install -y curl
 
 1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen Folder in WSL/Locally`を選択
 1. `.devcontainer/devcontainer.json`を一度削除する
-1. 以下のDockerfileを作成する
+1. 以下のDockerfileを　(ルートディレクトリ直下に) 作成して保存する
 
 ```dockerfile
 FROM ubuntu
@@ -260,7 +259,7 @@ RUN apt update && apt install -y git
 
 4. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen in Container`を選択
     - Dockerfileを選択する
-5. ターミナルを開いてユーザー名を確認する (`whoami`)
+5. VSCodeの中でターミナルを開いてユーザー名を確認する (`whoami`)
 
 ## ユーザとパーミッション
 
@@ -358,7 +357,7 @@ USER $USERNAME
 
 **バインドマウント**
 
-![](static/img/mount_bind.drawio.svg){align="center" width="80%"}
+![](static/img/mount_bind.drawio.svg){fig-align="center" width="70%"}
 
 :::
 
@@ -366,7 +365,7 @@ USER $USERNAME
 
 **ボリューム**
 
-![](static/img/mount_volume.drawio.svg){align="center" width="80%"}
+![](static/img/mount_volume.drawio.svg){fig-align="center" width="70%"}
 
 :::
 
@@ -374,8 +373,8 @@ USER $USERNAME
 
 
 - デフォルトではコンテナが削除されるとファイルも削除される
-- バインドマウントはホストのファイルをコンテナにマウントする
-- ボリュームはDockerが管理するファイルをコンテナにマウントする
+- バインドマウントはホストのフォルダをコンテナにマウントする
+- ボリュームはDockerが管理するフォルダをコンテナにマウントする
     - ホスト側からは (基本的に) 見えない
     - コンテナに最適化されたファイルシステムなので, パフォーマンスが良い
 
@@ -417,8 +416,13 @@ services:
 
 ## Handson: RStudio Server
 
+![](static/img/handson_rstudio.drawio.svg){fig-align="center"}
+
+---
+
 1. 新しいHandson用ののディレクトリを作成する (`handson2`)
-1. `Dockerfile`を作成し`FROM rocker/rstudio`と記述する
+1. VSCodeで新しく作成したディレクトリを開く
+1. `Dockerfile`を作成し`FROM rocker/rstudio`と記述し保存
 1. 以下の`docker-compose.yml`と`.devcontainer/devcontainer.json`を作成する
 
 :::: {.columns}
@@ -474,8 +478,79 @@ RUN R -e "install.packages(c('here', 'modelsummary', 'janitor'))"
 
 これらは`renv`のキャッシュをDocker Volumesに保存することで解決できる
 
+## `renv`によるパッケージ管理
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+1. `renv::init()`
+    - Rプロジェクトを作成したあとにを実行する
+    - `renv/`フォルダと`renv.lock`ファイルを作る
+1. `renv::snapshot()`
+    - 実行すると, その時にプロジェクトのソースコード中で使用されているパッケージ情報が`renv.lock`ファイルに自動的に記録される
+1. `renv::restore()`
+    - 共著者やコラボレーターは`renv::restore()`を実行することで`renv.lock`の情報からパッケージを自動でインストールできる
+
+:::
+
+::: {.column width="40%"}
+
+```{.json filename="renv.lock"}
+{
+  "R": {
+    "Version": "4.3.1",
+    "Repositories": [
+      {
+        "Name": "CRAN",
+        "URL": "https://packagemanager.posit.co/cran/latest"
+      }
+    ]
+  },
+  "Packages": {
+    "dplyr": {
+      "Package": "dplyr",
+      "Version": "1.0.10",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "539412282059f7f0c07295723d23f987",
+      "Requirements": [
+        "R6",
+        "generics",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "pillar",
+        "rlang",
+        "tibble",
+        "tidyselect",
+        "vctrs"
+      ]
+    },
+  }
+}
+```
+
+:::
+
+::::
+
+
+
+
+## `renv` のキャッシュ
+
+![](static/img/renv_backgroud.drawio.svg){fig-align="center"}
+
+- `renv`は各Rの各パッケージのバージョンごとにグローバルキャッシュを持っている
+- プロジェクト内で利用するパッケージは`renv/`フォルダ内に収められているが, 実体はシンボリックリンクが張られたグローバルキャッシュにある
+- キャッシュをシェアすることで, パッケージを無駄なくインストールできる
 
 ## Handson: RStudio Server with `renv`
+
+![](static/img/handson_renv.drawio.svg){fig-align="center"}
+
+---
 
 1. ホスト側で`renv`用のDocker Volumeを作成する
     - `docker volume create renv`

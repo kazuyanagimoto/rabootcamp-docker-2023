@@ -8,9 +8,7 @@ services:
         volumes:
             - .:/home/rstudio/rabootcamp-docker-2023
             - renv:/home/rstudio/.cache/R/renv
-            - fonts:/usr/share/fonts
+
 volumes:
   renv:
-    external: true
-  fonts:
     external: true
