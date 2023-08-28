@@ -1,0 +1,668 @@
+---
+title: "社会科学ためのDocker入門"
+subtitle: "レプリケーション駆動な研究のために"
+author:
+  - name: 柳本和春
+    email: kazuharu.yanagimoto@cemfi.edu.es
+    orcid: 0009-0007-1967-8304
+    affiliations:
+    - name: CEMFI
+date: 2023-08-31
+date-format: long
+image: img/thumbnail.svg
+execute:
+    echo: false
+    warning: false
+    message: false
+    cache: false
+format:
+  revealjs:
+    standalone: true
+    embed-resources: true
+    width: 1600
+    height: 900
+    theme: [default, static/css/quartomonothemer.scss, static/css/custom.scss]
+    slide-number: true
+    fig-cap-location: top
+    fig-format: svg
+    pdf-separate-fragments: false
+---
+
+# Introduction {visibility="hidden"}
+
+```{r}
+#| eval: false
+library(quartomonothemer)
+library(showtext)
+
+font_title <- "Zen Maru Gothic"
+font_text <- "Noto Sans JP"
+color_base <- "#009F8C"
+color_base_light <- "#95DFD6"
+color_accent <- "#B75C9D"
+color_accent_light <- "#DBA6CC"
+gray <- "#bebebe"
+darkgray <- "#6d6d6d"
+
+font_add_google(font_title)
+font_add_google(font_text)
+showtext_auto()
+
+style_mono_quarto(
+  font_title = font_title,
+  font_text = font_text,
+  google_fonts = c(font_title, font_text),
+  color_base = color_base,
+  color_accent = color_accent,
+  color_link = color_accent,
+  color_code = color_base,
+  size_base = 30,
+  path_scss = here::here("static/css/quartomonothemer.scss")
+)
+```
+
+## 検証可能性 _Testability_ {background-image="static/img/Karl_Popper_75.jpg" background-color="#090909" background-position="right" background-size="contain"}
+
+:::: {.columns}
+
+::: {.column width="65%"}
+
+<br>
+
+>"I shall certainly admit a system as [empirical]{.alert} or [scientific]{.alert} only if it is capable of being [tested]{.highlight} by experience."
+> 
+> --Karl Popper, 1934
+:::
+
+::::
+
+## レプリケーション駆動な研究
+
+[_研究が社会**科学**足るために再現性はその要件である_]{style="font-size: 1.2em;"}
+
+
+- 研究が検証可能であるためには, 研究者はその再現性を保証しなくてはいけない
+- AER, [Data and Code Availability Policy](https://www.aeaweb.org/journals/data/data-code-policy)
+
+[_レプリケーションは研究の**前提**であり, **過程**であり, **ゴール**である_]{style="font-size: 1.2em;"}
+
+- 研究の過程においてレプリケーション可能な操作のみを行うべき
+- そして研究者間のコミュニケーションコストを下げ, 研究を促進する
+
+## なぜ彼のコードは私のPCで動かないのか?
+
+- **パスが異なる**
+    - 常にパスを`here::here()`で対応可能. Pythonの場合 `pyprojroot.here()`
+- **パッケージのバージョンが異なる**
+    - `renv`を用いてバージョンを記録する. Pythonの場合 `venv`, `poetry` など
+- **Rのバージョンが異なる**
+    - `renv`はRのバージョンを切り替えることができないので, 手動で切り替えるか常に最新版を用いるなどで対応
+    - Pythonの場合は各種パッケージ管理ツールで対応可能
+- **OSが異なる**
+    - 特定のOSに特有のバグなどが発生しうる
+
+## バーチャルマシンとレプリケーション
+
+![](static/img/vm_replicate.drawio.svg){fig-align="center"}
+
+- コードと同時にVMを配布することで, 環境の違いを解消できる
+- しかしVMはファイルサイズが大きい, 実行速度が遅いなどの問題があった
+
+# LinuxとDockerの基礎 {visibility="uncounted"}
+
+## Linuxとは
+
+:::: {.columns}
+
+::: {.column width="70%"}
+
+- **狭義**: Linuxカーネルのこと
+    - OSの基礎的な機能を提供するライブラリ群
+- **広義**: Linuxカーネルを採用したOS
+    - コマンドやライブラリなどの違いによってディストリビューションに分かれる
+
+:::
+
+::: {.column width="30%"}
+
+![](static/img/def_linux.drawio.svg)
+
+:::
+
+::::
+
+### Linuxディストリビューション
+
+:::: {.columns}
+
+::: {.column width="70%"}
+
+- 主にDebian系, RedHat系, その他独立系に分かれる
+    - **Debian**: Ubuntu, Raspberry Pi
+    - **RedHat**: CentOS, Amazon Linux
+    - **独立系**: Chrome, Android, Arch, Alpine
+- Docker用としてはUbuntuがおすすめ
+
+:::
+
+::: {.column width="30%"}
+
+![](static/img/linux_dist.drawio.svg){fig-align="center"}
+
+:::
+
+::::
+
+
+## Dockerの仕組み
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+### Docker コンテナ
+
+- 1つのマシンのように振る舞う仮想環境
+- ホストOSとカーネルをシェアする
+- ホストもコンテナもLinux OS
+
+### 仮想化ソフトとの違い
+
+- 仮想化ソフトはホスト上のソフトウェア
+- ゲストOSをエミュレートして動作する
+- ホストもゲストもLinuxの必要はない
+- 仮想化ソフト上のマシンは遅くなる
+
+:::
+
+::: {.column width="50%"}
+
+<br>
+
+![](static/img/docker_mechanism.drawio.svg){fig-align="center"}
+
+:::
+
+::::
+
+
+## イメージとレジストリ
+
+### Docker イメージ
+
+- コンテナの元となるテンプレート
+    - OS単体 ([ubuntu](https://hub.docker.com/_/ubuntu), [alpine](https://hub.docker.com/_/alpine))
+    - OS + アプリケーション ([rocker/rstudio](https://hub.docker.com/r/rocker/rstudio))
+- `USER/IMAGE:TAG` で指定する. `TAG`を省略すると`latest`が指定される
+
+### Docker レジストリ
+
+- イメージを保存する場所
+- 基本的には[Docker Hub](https://hub.docker.com/)を用いる.
+    - Officialイメージ (ubuntu, rocker, node, jupyter, etc.)
+    - 自作イメージをアップロードもできる
+- その他, GitHub Container Registry, Amazon Elastic Container Registry など
+
+
+# Handson: 初めてのVSCode & Docker {visibility="hidden"}
+
+## VSCode & Docker
+
+### なぜVSCodeを使うのか?
+
+- VSCodeは軽量かつ高機能なエディタ. エディタの現王者といって過言ではない
+- Remote Containersの登場によってDocker環境の導入が革命的に簡単になった
+
+### Handson
+
+0. (Windows) VSCode上で {{< kbd Ctrl-Shift-P >}} を押して`WSL: Connect to WSL`を選択
+1. ハンズオン用のフォルダ (`handson1`) を作成する
+1. VSCodeでフォルダを開く. 左端の {{< fa copy >}}のアイコンから
+1. Docker Desktopが起動していることを確認 ({{< fa brands docker >}}のマーク)
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Open Folder in Container`を選択. 作成したフォルダを選び, `Ubuntu`を選択. 残りの選択肢はデフォルトのままでOK
+1. `.devcontainer/devcontainer.json`という設定ファイルが作成される
+
+## Dockerfile
+ 
+- 先程のHandsonは既存のUbuntuイメージを利用した
+- 通常は既存のイメージに必要なソフトやパッケージを追加する
+- Dockerfileはその設計図. 拡張子がないことに注意
+
+```dockerfile
+FROM ubuntu
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y curl
+```
+
+- `FROM`: ベースとなるイメージを指定
+- `ENV`: 環境変数を設定. Ubuntuの場合は`DEBIAN_FRONTEND`はこの設定が必要
+- `RUN`: シェルコマンドを実行
+    - `apt update`: パッケージリストを更新
+    - `apt install`: パッケージインストール (`-y` はすべてに自動でyesを返す)
+
+## Handson: Remote containers with Dockerfile
+
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen Folder in WSL/Locally`を選択
+1. `.devcontainer/devcontainer.json`を一度削除する
+1. 以下のDockerfileを　(ルートディレクトリ直下に) 作成して保存する
+
+```dockerfile
+FROM ubuntu
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y git
+```
+
+4. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen in Container`を選択
+    - Dockerfileを選択する
+5. VSCodeの中でターミナルを開いてユーザー名を確認する (`whoami`)
+
+## ユーザとパーミッション
+
+### ユーザ, グループ, Root
+
+- Linuxではユーザごとにファイルの権限 (読み取り, 書き込み, 実行) が設定されている
+- ユーザはグループに所属する. グループごとに権限を設定することもできる
+- rootユーザ (管理者) はすべてのファイルにアクセスできる
+
+
+### Dockerとユーザ
+
+- Dockerでは通常, rootユーザでコンテナが起動する
+- Docker上で作業したファイルがroot権限で作成される
+- LinuxとWSL2ユーザーはホスト側からファイルにアクセスできなくなる
+- 一つの解決策として, Dockerfile内でユーザを作成するという方法がある
+
+## Handson: Remote Containers with a User
+
+1. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Reopen Folder in WSL/Locally`を選択
+2. 以下のDockerfileを作成する
+
+```dockerfile
+FROM ubuntu
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y git
+
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+USER $USERNAME
+```
+
+3. `.devcontainer/devcontainer.json`の`remoteUser`を`vscode`に変更する
+4. VSCodeで{{< kbd Ctrl-Shift-P >}}を押して`Rebuild and Reopen in Container`を選択
+5. ターミナルを開いてユーザー名を確認する (`whoami`) 
+
+
+
+
+
+# {{< fa brands r-project >}} on Docker {visibility="uncounted"}
+
+## `rocker`プロジェクト
+
+- [rocker](https://rocker-project.org/)はオフィシャルのRイメージ群
+- 私はRのライブラリはキャッシュする (後述) ので, `rocker/rstudio`または`rocker/geospatial`を使うことが多い
+- `rstudio`というユーザが用意されている
+
+| イメージ                                                                      | ベースイメージ    | 概要                               | 
+| ----------------------------------------------------------------------------- | ----------------- | ---------------------------------- | 
+| [rocker/r-ver](https://rocker-project.org/images/versioned/r-ver.html)        | ubuntu            | Ubuntu + R                         | 
+| [rocker/rstudio](https://rocker-project.org/images/versioned/rstudio.html)    | rocker/r-ver      | + RStudio Server                   | 
+| [rocker/tidyverse](https://rocker-project.org/images/versioned/rstudio.html)  | rocker/rstudio    | + `tidyverse` & `devtools`         | 
+| [rocker/verse](https://rocker-project.org/images/versioned/rstudio.html)      | rocker/tidyverse  | + `tinytex` & 組版関係のパッケージ | 
+| [rocker/geospatial](https://rocker-project.org/images/versioned/rstudio.html) | rocker/geospatial | + 地理情報用パッケージ             | 
+
+## ポートフォワーディング
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**通常のRStudio Server**
+
+![](static/img/rstudio_server.drawio.svg){fig-align="center" width="80%"}
+
+:::
+
+::: {.column width="50%"}
+
+**コンテナ内のRStudio Server**
+
+![](static/img/portfowarding.drawio.svg){fig-align="center" width="80%"}
+
+:::
+
+::::
+
+- Docker内のRStudio Serverはホストのブラウザからはアクセスできない
+- ポートフォワーディングを設定することで, ホストのポートをDocker内のポートに接続することができる
+
+## マウント
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**バインドマウント**
+
+![](static/img/mount_bind.drawio.svg){fig-align="center" width="70%"}
+
+:::
+
+::: {.column width="50%"}
+
+**ボリューム**
+
+![](static/img/mount_volume.drawio.svg){fig-align="center" width="70%"}
+
+:::
+
+::::
+
+
+- デフォルトではコンテナが削除されるとファイルも削除される
+- バインドマウントはホストのフォルダをコンテナにマウントする
+- ボリュームはDockerが管理するフォルダをコンテナにマウントする
+    - ホスト側からは (基本的に) 見えない
+    - コンテナに最適化されたファイルシステムなので, パフォーマンスが良い
+
+
+## docker-compose.yml
+
+- `docker-compose.yml`ファイルにコンテナ起動の際の設定を記述することができる
+- 複数のコンテナを起動することもできる
+
+
+:::: {.columns}
+
+::: {.column width="40%"}
+```yaml
+services:
+  rstudio:
+    build:
+      context: .
+    environment:
+      - TZ=Asia/Tokyo
+      - DISABLE_AUTH=true
+    volumes:
+      - .:/home/rstudio/handson2
+```
+:::
+
+::: {.column width="60%"}
+
+- `build context`: `Dockerfile`のパス
+- `environment`: 環境変数の設定
+    - `TZ`: タイムゾーン
+    - `DISABLE_AUTH`: RStudioのパスワード認証を無効化
+- `volumes`: マウント
+    - HOST_PATH:CONTAINER_PATH
+    - 上記の例はバインドマウント
+:::
+
+::::
+
+## Handson: RStudio Server
+
+![](static/img/handson_rstudio.drawio.svg){fig-align="center"}
+
+---
+
+1. 新しいHandson用ののディレクトリを作成する (`handson2`)
+1. VSCodeで新しく作成したディレクトリを開く
+1. `Dockerfile`を作成し`FROM rocker/rstudio`と記述し保存
+1. 以下の`docker-compose.yml`と`.devcontainer/devcontainer.json`を作成する
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```yaml
+services:
+  rstudio:
+    build:
+      context: .
+    environment:
+      - TZ=Asia/Tokyo
+      - DISABLE_AUTH=true
+    volumes:
+      - .:/home/rstudio/handson2
+```
+:::
+
+::: {.column width="50%"}
+```json
+{
+    "name": "${localWorkspaceFolderBasename}",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "rstudio",
+    "remoteUser": "rstudio",
+    "forwardPorts": [8787],
+    "workspaceFolder": "/home/rstudio/handson2"
+}
+```
+:::
+
+::::
+
+4. VSCodeで{{< kbd Ctrl-Shift-P >}}から`Rebuild and Reopen in Container`を選択する
+5. ブラウザで`localhost:8787`にアクセスする
+
+## Rパケージのインストール
+
+以下のような`Dockerfile`でコンテナの中にRパッケージをインストールできる
+
+```dockerfile
+FROM rocker/rstudio
+
+RUN R -e "install.packages(c('here', 'modelsummary', 'janitor'))"
+```
+
+しかしこの方法はいくつかの問題がある
+
+- パッケージのバージョンを指定しているわけではない
+- パッケージを追加するごとに`Dockerfile`を書き換える必要がある
+- ビルドのたびにパッケージをインストールするので時間がかかる
+- コンテナごとにパッケージをインストールするのでストレージを圧迫する
+
+これらは`renv`のキャッシュをDocker Volumesに保存することで解決できる
+
+## `renv`によるパッケージ管理
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+1. `renv::init()`
+    - Rプロジェクトを作成したあとにを実行する
+    - `renv/`フォルダと`renv.lock`ファイルを作る
+1. `renv::snapshot()`
+    - 実行すると, その時にプロジェクトのソースコード中で使用されているパッケージ情報が`renv.lock`ファイルに自動的に記録される
+1. `renv::restore()`
+    - 共著者やコラボレーターは`renv::restore()`を実行することで`renv.lock`の情報からパッケージを自動でインストールできる
+
+:::
+
+::: {.column width="40%"}
+
+```{.json filename="renv.lock"}
+{
+  "R": {
+    "Version": "4.3.1",
+    "Repositories": [
+      {
+        "Name": "CRAN",
+        "URL": "https://packagemanager.posit.co/cran/latest"
+      }
+    ]
+  },
+  "Packages": {
+    "dplyr": {
+      "Package": "dplyr",
+      "Version": "1.0.10",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "539412282059f7f0c07295723d23f987",
+      "Requirements": [
+        "R6",
+        "generics",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "pillar",
+        "rlang",
+        "tibble",
+        "tidyselect",
+        "vctrs"
+      ]
+    },
+  }
+}
+```
+
+:::
+
+::::
+
+
+
+
+## `renv` のキャッシュ
+
+![](static/img/renv_backgroud.drawio.svg){fig-align="center"}
+
+- `renv`は各Rの各パッケージのバージョンごとにグローバルキャッシュを持っている
+- プロジェクト内で利用するパッケージは`renv/`フォルダ内に収められているが, 実体はシンボリックリンクが張られたグローバルキャッシュにある
+- キャッシュをシェアすることで, パッケージを無駄なくインストールできる
+
+## Handson: RStudio Server with `renv`
+
+![](static/img/handson_renv.drawio.svg){fig-align="center"}
+
+---
+
+1. ホスト側で`renv`用のDocker Volumeを作成する
+    - `docker volume create renv`
+1. `docker-compose.yml`, `Dockerfile`を以下のように書き換える
+    - `chown`で`renv`ディレクトリの所有者を`rstudio`にしている
+
+:::: {.columns}
+
+::: {.column width="45%"}
+```yaml
+services:
+  rstudio:
+    build:
+      context: .
+    environment:
+      - TZ=Asia/Tokyo
+      - DISABLE_AUTH=true
+    volumes:
+      - .:/home/rstudio/handson2
+      - renv:/home/rstudio/.cache/R/renv
+
+volumes:
+  renv:
+    external: true      
+```
+:::
+
+::: {.column width="55%"}
+```dockerfile
+FROM rocker/rstudio
+
+RUN R -e "install.packages('renv')"
+
+RUN cd /home/rstudio && \
+    mkdir .cache .cache/R .cache/R/renv && \
+    chown rstudio:rstudio .cache .cache/R .cache/R/renv
+```
+:::
+
+::::
+
+3. VSCodeで{{< kbd Ctrl-Shift-P >}}から`Rebuild and Reopen in Container`を選択する
+4. RStudioでプロジェクト作成し, `renv`を用いてパッケージを記録する
+
+# Docker + VSCodeによる研究環境 {visibility="uncounted"}
+
+## Handson: kazuyanagimoto/dockerR
+
+### 管理者編
+
+1. [kazuyanagimoto/dockerR](https://github.com/kazuyanagimoto/dockerR)をテンプレートにGitHubのレポジトリを作成する
+1. 作成したレポジトリをクローンする
+1. `Dockerfile`, `docker-compose.yml`, `.devcontainer.json` を修正する.
+    - Python, Julia, TinyTeXなど今回関係ないものは削除する
+1. Docker Volumeが作られていることを確認する
+1. VSCodeで`Rebuild and Reopen in Container`を選択する
+1. RStudioでプロジェクトを作成し, `renv`を用いてパッケージをインストールする
+
+
+## Handson: kazuyanagimoto/dockerR
+
+### 共著者編
+
+1. [kazuyanagimoto/rabootcamp-docker-2023](https://github.com/kazuyanagimoto/rabootcamp-docker-2023)をクローンする
+1. Docker Volumeが作られていることを確認する (今回は必要ない)
+1. VSCodeで`Rebuild and Reopen in Container`を選択する
+1. Rプロジェクトを開き, `renv::restore()` を実行して必要なパッケージをインストールする
+1. `index.qmd` を開き, {{< kbd Ctrl-Shift-K >}}でスライドがビルドされることを確認する
+
+
+より詳しい使い方は[Zenn記事 {{< fa arrow-up-right-from-square >}}](https://zenn.dev/nicetak/articles/vscode-docker-2023)を参考のこと
+
+
+## Docker Desktop for Windows/Mac
+
+### DockerはLinux上の技術
+
+- Docker Desktop for Windows/Macでは, 仮想マシン上のLinuxを用いてDockerを使う
+- WindowsはWSL2という軽量かつ高速なLinuxエミュレータを用いる
+- Mac上のDockerは一般にLinux上のDockerよりも数段遅くなる
+
+### ファイルシステムの違い
+
+- Windows/Mac上のファイルをDocker (Linux) で用いようとするとファイルの変換作業が必要
+- Windowsの場合はWSL2の領域でファイルを保存すれば解決する
+- Macの場合は長らく解決策がなかったが, virtiofsという新しいファイルシステムを用いることで高速化した (らしい)
+
+## 発展: Docker on AWS {visibility="uncounted"}
+
+AWSなどのクラウド上にDockerを用いると簡単に環境構築できることを実演する
+
+### SSH接続
+
+0. AWSアカウントを作成する. クレジットカード登録も必要.
+1. AWSでEC2インスタンスを作成. Ubuntuを選ぶ.
+1. インスタンス作成時にキーペアを作成すると, `.pem`ファイルがダウンロードされる
+    - 基本的にユーザー直下の`.ssh`フォルダに保存する
+    - Mac/Linuxの場合のみ, `chmod 400`で`.pem`ファイルのパーミッションを変更する
+1. インスタンスを起動する. インスタンスのパブリックIPアドレスをメモしておく
+1. インスタンスにSSHでログインする. ターミナルを開き, 
+
+```shell
+ssh -i PATH_TO_PEM ubuntu@IP_ADDRESS
+```
+
+---
+
+### 
+
+
+# Learn More {visibility="uncounted" background-color="#009F8C" .center-x}
+
+[Udemy講座 (かめ)](https://www.udemy.com/course/aidocker/) ・
+[Zenn記事 (柳本)](https://zenn.dev/nicetak/articles/vscode-docker-2023) ・
+[Notion記事 (神戸大 山﨑先生)](https://j-yamasaki.notion.site/R-LaTeX-335c1fce585041fe86ad06488075c98d#f1a45b668e7c4e0f9a61177b82e450b4)

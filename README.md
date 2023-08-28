@@ -1,36 +1,35 @@
-# My Docker-VSCode Template for R (with Python, Julia, and LaTeX)
+# RAブートキャンプトピックレクチャー: 社会科学ためのDocker入門
 
-## Prerequisites (and for the first time to use this template)
+## 事前準備
 
-- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). I strongly recommend using it on WSL2 (Windows Subsystem for Linux 2) if you are using Windows.
-- Install [VSCode](https://code.visualstudio.com/) and [Remote-Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-- Create [Docker volumes](https://docs.docker.com/storage/volumes/) by running
-    ```{bash}
-    docker volume create renv
-    docker volume create pip
-    docker volume createe julia
-    docker volume create TinyTeX
-    docker volume create fonts
-    ```
+### Windows
 
-## Quick Start
-1. Clone this repository
-1. Open it in VSCode and add Remote-Containers Extension
-From the command palette (Ctrl+Shift+P), choose "open folder in container"
-1. Open `localhost:8787` in a browser
-1. Create a project for this project directory (by default, choose `/home/rstudio/work`)
-1. RUN `renv::init()` in the R console
-1. RUN `pip install dvc dvc-gdrive` for DVC install (if you have never used this template)
-1. Set up a [DVC](https://dvc.org/) environment
-    1. Prepare a folder in Google Drive (and copy the folder code)
-    1. Init DVC
-        ```{bash}
-        dvc init
-        dvc remote add --default myremote gdrive://GDRIVE_FOLDER_CODE
-        ```
-1. Set up LaTeX compiling recipe. Do the one of the following:
-    - Rename `.vscode/_settings.json` into `.vscode/settings.json` (which is git-ignored)
-    - Add the lines in `.vscode/_settings.json` into your `.vscode/settings.json`
-1. Set up Julia environment
-    1. Create an empty file `Project.toml` in the project root directory
-    1. In Julia console, Run `] activate .` and `] instantiate`
+必ずUbuntuのインストールと設定が終了してからDocker for Desktopをインストールすること.
+また特に理由がない限り, Windows 11の使用を推奨する.
+Windows 10を使用する場合も最新のバージョンにアップデートすることを推奨する.
+次のステップに進めない場合は再起動をかけてから, もう一度試してみること.
+
+1. Powershellを管理者権限で開き, `wsl --install` を実行. 再起動する
+1. Ubuntuを起動し、ユーザー名とパスワードを設定
+    - Windows 10の古いバージョンの場合, 複雑な設定を行わないと起動できない可能性がある
+1. Ubuntuを起動し、`sudo apt update`を実行
+1. [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)をインストール
+    - 公式Websiteか, PowerShellで`winget install Docker.DockerDesktop`を実行
+1. PCを再起動する
+1. Docker Desktopを起動する
+1. Ubuntuを開き`docker -v`でバージョンが表示されることを確認
+1. VSCodeをインストール
+    - 公式Websiteか, PowerShellで`winget install vscode`を実行
+
+### Mac
+
+1. [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)をインストール
+    - 公式Websiteか, Terminalで`brew install --cask docker`を実行
+    - brewがインストールされていない場合は[こちら](https://brew.sh/index_ja)を参照
+    - インテル版とApple Silicon版があるので自分のMacに合わせてインストールすること
+1. PCを再起動する
+1. Docker Desktopを起動する
+1. Terminalを開き`docker -v`でバージョンが表示されることを確認
+1. VSCodeをインストール
+    - 公式Websiteか, Terminalで`brew install --cask visual-studio-code`を実行
+

@@ -6,13 +6,11 @@
     "extensions": [
 		"REditorSupport.r",
         "quarto.quarto",
-        "znck.grammarly",
-        "julialang.language-julia",
-        "janisdd.vscode-edit-csv",
         "James-Yu.latex-workshop",
-        "GitHub.copilot"
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
 	],
 	"forwardPorts": [8080, 8787],
-    "workspaceFolder": "/home/rstudio/work",
+    "workspaceFolder": "/home/rstudio/rabootcamp-docker-2023",
     "shutdownAction": "stopCompose",
 }

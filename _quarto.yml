@@ -1,0 +1,4 @@
+project:
+  output-dir: docs
+
+bibliography: static/references.bib
