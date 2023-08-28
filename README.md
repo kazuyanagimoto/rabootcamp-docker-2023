@@ -7,11 +7,11 @@
 必ずUbuntuのインストールと設定が終了してからDocker for Desktopをインストールすること.
 また特に理由がない限り, Windows 11の使用を推奨する.
 Windows 10を使用する場合も最新のバージョンにアップデートすることを推奨する.
+次のステップに進めない場合は再起動をかけてから, もう一度試してみること.
 
-1. Microsoft StoreでUbuntuをインストール
+1. Powershellを管理者権限で開き, `wsl --install` を実行. 再起動する
 1. Ubuntuを起動し、ユーザー名とパスワードを設定
-    - Windows 10の古いバージョンの場合, 複雑な設定を行わないと起動できない可能性がある.
-    - 例えば[この記事](https://qiita.com/ksasaki/items/1b7b003f1a9c1d0a8b0e)などを参照にして設定すること
+    - Windows 10の古いバージョンの場合, 複雑な設定を行わないと起動できない可能性がある
 1. Ubuntuを起動し、`sudo apt update`を実行
 1. [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)をインストール
     - 公式Websiteか, PowerShellで`winget install Docker.DockerDesktop`を実行

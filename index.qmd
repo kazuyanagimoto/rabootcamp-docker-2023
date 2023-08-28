@@ -640,6 +640,27 @@ RUN cd /home/rstudio && \
 
 ## 発展: Docker on AWS {visibility="uncounted"}
 
+AWSなどのクラウド上にDockerを用いると簡単に環境構築できることを実演する
+
+### SSH接続
+
+0. AWSアカウントを作成する. クレジットカード登録も必要.
+1. AWSでEC2インスタンスを作成. Ubuntuを選ぶ.
+1. インスタンス作成時にキーペアを作成すると, `.pem`ファイルがダウンロードされる
+    - 基本的にユーザー直下の`.ssh`フォルダに保存する
+    - Mac/Linuxの場合のみ, `chmod 400`で`.pem`ファイルのパーミッションを変更する
+1. インスタンスを起動する. インスタンスのパブリックIPアドレスをメモしておく
+1. インスタンスにSSHでログインする. ターミナルを開き, 
+
+```shell
+ssh -i PATH_TO_PEM ubuntu@IP_ADDRESS
+```
+
+---
+
+### 
+
+
 # Learn More {visibility="uncounted" background-color="#009F8C" .center-x}
 
 [Udemy講座 (かめ)](https://www.udemy.com/course/aidocker/) ・
