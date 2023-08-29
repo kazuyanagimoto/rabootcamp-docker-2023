@@ -597,7 +597,7 @@ RUN cd /home/rstudio && \
 
 # Docker + VSCodeによる研究環境 {visibility="uncounted"}
 
-## Handson: kazuyanagimoto/dockerR
+## Handson: kazuyanagimoto/dockerR {#sec-handson-dockerr}
 
 ### 管理者編
 
@@ -609,15 +609,15 @@ RUN cd /home/rstudio && \
 1. VSCodeで`Rebuild and Reopen in Container`を選択する
 1. RStudioでプロジェクトを作成し, `renv`を用いてパッケージをインストールする
 
-
-## Handson: kazuyanagimoto/dockerR
+---
 
 ### 共著者編
 
 1. [kazuyanagimoto/rabootcamp-docker-2023](https://github.com/kazuyanagimoto/rabootcamp-docker-2023)をクローンする
 1. Docker Volumeが作られていることを確認する (今回は必要ない)
 1. VSCodeで`Rebuild and Reopen in Container`を選択する
-1. Rプロジェクトを開き, `renv::restore()` を実行して必要なパッケージをインストールする
+1. Rコンソールで`install.packages(c("rlang", "jsonlite", "rmarkdown"))`を実行する
+1. Rプロジェクトを開き, `renv::restore()` を実行する
 1. `index.qmd` を開き, {{< kbd Ctrl-Shift-K >}}でスライドがビルドされることを確認する
 
 
@@ -638,11 +638,9 @@ RUN cd /home/rstudio && \
 - Windowsの場合はWSL2の領域でファイルを保存すれば解決する
 - Macの場合は長らく解決策がなかったが, virtiofsという新しいファイルシステムを用いることで高速化した (らしい)
 
-## 発展: Docker on AWS {visibility="uncounted"}
+# 発展: Docker on AWS {visibility="uncounted"}
 
-AWSなどのクラウド上にDockerを用いると簡単に環境構築できることを実演する
-
-### SSH接続
+## SSH接続
 
 0. AWSアカウントを作成する. クレジットカード登録も必要.
 1. AWSでEC2インスタンスを作成. Ubuntuを選ぶ.
@@ -650,16 +648,83 @@ AWSなどのクラウド上にDockerを用いると簡単に環境構築でき�
     - 基本的にユーザー直下の`.ssh`フォルダに保存する
     - Mac/Linuxの場合のみ, `chmod 400`で`.pem`ファイルのパーミッションを変更する
 1. インスタンスを起動する. インスタンスのパブリックIPアドレスをメモしておく
-1. インスタンスにSSHでログインする. ターミナルを開き, 
+1. インスタンスにSSHでログインする. ターミナルを開き, SSH接続ができることを確認
 
 ```shell
 ssh -i PATH_TO_PEM ubuntu@IP_ADDRESS
 ```
 
----
+::: {.callout-note}
 
-### 
+## Speedtest CLI
 
+- [speedtest-cli](https://www.speedtest.net/apps/cli)をインストールすると, インターネットの速度を計測できる
+- Ubuntu向けのインストールを完了した後, `speedtest`をターミナルで実行する
+- 高速なインターネット環境 (1Gbps前後) であることを確認する
+
+:::
+
+
+## Docker環境の構築
+
+**dockerのインストール**
+
+```shell
+sudo amazon-linux-extras install -y docker
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -a -G docker ubuntu
+```
+
+**docker-composeのインストール**
+
+```shell
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -L https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m) \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+sudo ln -s /usr/local/lib/docker/cli-plugins/docker-compose /usr/bin/docker-compose
+```
+
+- `ubuntu`ユーザーを`docker`をsudoなしで実行できるようにしている
+- v2.20.3の部分は最新版の[リリース](https://github.com/docker/compose/releases/tag/v2.20.3)を確認
+- ここまで終了したら, `exit`で一度ログアウトする
+
+## VSCode SSH接続
+
+0. VSCodeに`Remote-SSH`拡張機能をインストール
+1. `~/.ssh/config`に以下のように記述する
+
+```shell
+Host rabootcamp
+  HostName IP_ADDRESS
+  User ubuntu
+  IdentityFile PATH_TO_PEM
+```
+
+2. VSCodeで`Remote-SSH: Connect to Host...`で`rabootcamp`を選択
+3. kazuyanagimoto/dockerRのハンズオンの共著者編を実行する
+
+::: {.callout-caution}
+
+ハンズオンの終了時には必ずインスタンスを停止すること. 今後使う予定がない場合は終了してもよい.
+
+:::
+
+## Docker on AWS の実践的アドバイス
+
+**インスタンスの切り忘れが怖い**
+
+- AWSのバジェットアラートを設定すると, 予算を超えた場合にメールで通知してくれる
+
+**IPアドレスが毎回変更されてしまうのが面倒**
+
+- AWSの[Elastic IP](https://docs.aws.amazon.com/ja_jp/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) (有料) を使うと, IPアドレスを固定できる
+- GoogleのGCPは現在は無料でIPアドレスを固定できる
+
+**AWS上のコンテナ内でGitHubと通信したい**
+
+- ローカルでSSH Agentの設定とSSHコンフィグでAgent Forwardの設定を行うと, ローカルのSSHキーをAWS上のコンテナで使えるようになる
 
 # Learn More {visibility="uncounted" background-color="#009F8C" .center-x}
 
