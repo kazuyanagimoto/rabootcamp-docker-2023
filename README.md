@@ -1,7 +1,7 @@
 # RAブートキャンプ: 社会科学ためのDocker入門
 
 - [HTMLスライド](https://kazuyanagimoto.com/rabootcamp-replicate-2023/)
-- [PDFスライド](https://kazuyanagimoto.com/rabootcamp-replicate-2023/rabootcamp-docker-yanagimoto.pdf)
+- [PDFスライド](https://kazuyanagimoto.com/rabootcamp-replicate-2023/rabootcamp_docker_yanagimoto.pdf)
 
 ## 事前準備
 
